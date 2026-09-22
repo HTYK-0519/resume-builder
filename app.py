@@ -28,6 +28,18 @@ def index():
     logger.info("메인 페이지(/) 접속 요청을 수신했습니다.")
     return render_template("index.html")
 
+# [Route 1-1] PWA 지원: 매니페스트 및 서비스 워커 서빙 라우트
+@app.route("/manifest.json")
+def manifest():
+    return app.send_static_file("manifest.json")
+
+@app.route("/sw.js")
+def service_worker():
+    response = app.send_static_file("sw.js")
+    response.headers["Content-Type"] = "application/javascript"
+    response.headers["Service-Worker-Allowed"] = "/"
+    return response
+
 # [Route 2] 이력서 및 포트폴리오 생성 API: 프론트엔드 입력을 받아 Gemini AI를 호출합니다.
 @app.route("/generate", methods=["POST"])
 def generate():
