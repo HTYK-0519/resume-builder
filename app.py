@@ -19,8 +19,13 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
     logger.warning("⚠️ 경고: .env 파일에 GEMINI_API_KEY가 설정되지 않았습니다!")
 
-# 3. Flask 웹 애플리케이션 객체 생성
-app = Flask(__name__)
+# 3. Flask 웹 애플리케이션 객체 생성 (Vercel Serverless 환경 대응 절대 경로 설정)
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static")
+)
 
 # [Route 1] 메인 페이지: 사용자가 웹 브라우저로 접속했을 때 HTML 화면을 보여줍니다.
 @app.route("/")
