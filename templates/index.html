@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume & Portfolio Builder</title>
+    <!-- 외부 스타일시트 연결 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 영역 -->
+        <header class="header">
+            <h1>🚀 AI Resume & Portfolio Builder</h1>
+            <p class="subtitle">간단한 정보 입력만으로 Gemini AI가 전문적인 이력서와 포트폴리오를 생성해 드립니다.</p>
+        </header>
+
+        <!-- 메인 콘텐츠 영역 (2단 그리드: 좌측 입력 폼, 우측 결과창) -->
+        <main class="main-content">
+            <!-- 좌측: 입력 폼 섹션 -->
+            <section class="form-section">
+                <form id="resumeForm">
+                    <!-- 1. 이름 -->
+                    <div class="form-group">
+                        <label for="name">이름 <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" placeholder="예: 홍길동" required>
+                    </div>
+
+                    <!-- 2. 지원 직무 -->
+                    <div class="form-group">
+                        <label for="jobTitle">지원 직무 <span class="required">*</span></label>
+                        <input type="text" id="jobTitle" name="jobTitle" placeholder="예: 백엔드 개발자 / 프로덕트 매니저" required>
+                    </div>
+
+                    <!-- 3. 어조 (Tone) -->
+                    <div class="form-group">
+                        <label for="tone">어조 (Tone & Manner)</label>
+                        <select id="tone" name="tone">
+                            <option value="전문적이고 신뢰감 있는">전문적이고 신뢰감 있는</option>
+                            <option value="열정적이고 도전적인">열정적이고 도전적인</option>
+                            <option value="간결하고 핵심 중심의">간결하고 핵심 중심의</option>
+                            <option value="정중하고 겸손한">정중하고 겸손한</option>
+                        </select>
+                    </div>
+
+                    <!-- 4. 프롬프트 모드 선택 (Prompt A vs Prompt B) -->
+                    <div class="form-group">
+                        <label>생성 모드 선택 <span class="required">*</span></label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="promptType" value="A" checked>
+                                <span class="radio-custom"></span>
+                                <div>
+                                    <strong>Prompt A (일반 모드)</strong>
+                                    <p class="radio-desc">표준적이고 가독성이 뛰어난 균형 잡힌 서식</p>
+                                </div>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="promptType" value="B">
+                                <span class="radio-custom"></span>
+                                <div>
+                                    <strong>Prompt B (전문가 모드)</strong>
+                                    <p class="radio-desc">STAR 기법 및 정량적 성과 지표 중심 심화 서식</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 5. 주요 경력 사항 -->
+                    <div class="form-group">
+                        <label for="experience">주요 경력 사항 <span class="required">*</span></label>
+                        <textarea id="experience" name="experience" rows="5" placeholder="회사명, 근무 기간, 담당 업무, 사용 기술 등을 자유롭게 작성해주세요." required></textarea>
+                    </div>
+
+                    <!-- 6. 수행 프로젝트 경험 -->
+                    <div class="form-group">
+                        <label for="projects">수행 프로젝트 경험 <span class="required">*</span></label>
+                        <textarea id="projects" name="projects" rows="5" placeholder="프로젝트 이름, 문제 해결 과정, 본인이 기여한 부분과 결과(성과)를 적어주세요." required></textarea>
+                    </div>
+
+                    <!-- 에러 메시지 알림 박스 -->
+                    <div id="errorMessage" class="error-box" style="display: none;"></div>
+
+                    <!-- 생성 버튼 -->
+                    <button type="submit" id="submitBtn" class="btn btn-primary">
+                        ✨ AI 이력서 & 포트폴리오 생성하기
+                    </button>
+                </form>
+            </section>
+
+            <!-- 우측: 결과 표시 섹션 -->
+            <section class="result-section">
+                <div class="result-header">
+                    <h2>📄 생성 결과 미리보기</h2>
+                    <div class="action-buttons">
+                        <button type="button" id="copyBtn" class="btn btn-secondary" disabled>📋 전체 복사</button>
+                        <button type="button" id="downloadBtn" class="btn btn-secondary" disabled>💾 .md 다운로드</button>
+                    </div>
+                </div>
+
+                <!-- 로딩 표시기 -->
+                <div id="loadingIndicator" class="loading-box" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Gemini AI가 이력서와 포트폴리오를 작성 중입니다.<br>잠시만 기다려 주세요 (약 5~10초 소요)</p>
+                </div>
+
+                <!-- 비어있을 때 안내 문구 -->
+                <div id="placeholderText" class="placeholder-box">
+                    <p>좌측 폼에 정보를 입력하고 <strong>[생성하기]</strong> 버튼을 누르면 이곳에 완성된 이력서와 포트폴리오가 나타납니다.</p>
+                </div>
+
+                <!-- 실제 마크다운 결과가 출력될 영역 -->
+                <div id="resultContainer" class="result-container" style="display: none;">
+                    <pre id="resultOutput"></pre>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 외부 자바스크립트 연결 -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
