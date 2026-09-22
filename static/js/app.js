@@ -169,4 +169,75 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.removeChild(tempLink);
         URL.revokeObjectURL(downloadUrl);
     });
+
+    // ==========================================
+    // 4. PWA (모바일/데스크톱) 앱 설치 버튼 로직
+    // ==========================================
+    const pwaInstallBtn = document.getElementById("pwaInstallBtn");
+    let deferredPrompt = null;
+
+    // 이미 홈 화면에 앱으로 설치되어 실행 중인지 확인
+    const isStandalone = () => {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    };
+
+    // iOS (Safari) 여부 감지
+    const isIos = () => {
+        const ua = window.navigator.userAgent.toLowerCase();
+        return /iphone|ipad|ipod/.test(ua);
+    };
+
+    // 이미 앱으로 실행 중이면 설치 버튼 숨김
+    if (pwaInstallBtn) {
+        if (isStandalone()) {
+            pwaInstallBtn.style.display = "none";
+        } else if (isIos()) {
+            // iOS 사파리는 beforeinstallprompt 이벤트를 지원하지 않으므로 버튼을 항상 노출
+            pwaInstallBtn.style.display = "inline-flex";
+        }
+    }
+
+    // 안드로이드 / 크롬 / 엣지 등 PWA 설치 지원 브라우저
+    window.addEventListener("beforeinstallprompt", (e) => {
+        // 브라우저 기본 설치 배너 방지
+        e.preventDefault();
+        deferredPrompt = e;
+
+        // 이미 설치된 상태가 아니라면 우리 커스텀 버튼 노출
+        if (pwaInstallBtn && !isStandalone()) {
+            pwaInstallBtn.style.display = "inline-flex";
+        }
+    });
+
+    // 설치 버튼 클릭 시 동작
+    if (pwaInstallBtn) {
+        pwaInstallBtn.addEventListener("click", async () => {
+            if (deferredPrompt) {
+                // 안드로이드/크롬/엣지: 브라우저 네이티브 설치 팝업 띄우기
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === "accepted") {
+                    console.log("[PWA] 사용자가 앱 설치를 수락했습니다.");
+                } else {
+                    console.log("[PWA] 사용자가 앱 설치를 취소했습니다.");
+                }
+                deferredPrompt = null;
+                pwaInstallBtn.style.display = "none";
+            } else if (isIos()) {
+                // iOS 사용자를 위한 친절한 설치 안내
+                alert("📲 아이폰/아이패드 홈 화면 설치 방법:\n\n1. Safari 브라우저 하단(또는 상단)의 [공유] 버튼(사각형에 위쪽 화살표 ↑)을 누릅니다.\n2. 메뉴를 아래로 스크롤하여 [홈 화면에 추가]를 선택해 주세요!");
+            } else {
+                alert("브라우저 메뉴(점 세 개 또는 설정)에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하실 수도 있습니다.");
+            }
+        });
+    }
+
+    // 앱 설치 완료 감지 이벤트
+    window.addEventListener("appinstalled", () => {
+        console.log("[PWA] 앱 설치가 완료되었습니다.");
+        if (pwaInstallBtn) {
+            pwaInstallBtn.style.display = "none";
+        }
+        deferredPrompt = null;
+    });
 });
